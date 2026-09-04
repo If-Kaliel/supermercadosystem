@@ -1,0 +1,11 @@
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\bin\Debug\net10.0\Supermercado.Domain.deps.json
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\bin\Debug\net10.0\Supermercado.Domain.dll
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\bin\Debug\net10.0\Supermercado.Domain.pdb
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.AssemblyInfoInputs.cache
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.AssemblyInfo.cs
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.csproj.CoreCompileInputs.cache
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.dll
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\refint\Supermercado.Domain.dll
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\Supermercado.Domain.pdb
+C:\Users\fabi_\OneDrive\Área de Trabalho\SupermercadoSystem\src\Supermercado.Domain\obj\Debug\net10.0\ref\Supermercado.Domain.dll
