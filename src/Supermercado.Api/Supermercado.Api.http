@@ -1,4 +1,4 @@
-@Supermercado.Api_HostAddress = http://localhost:5100
+@Supermercado.Api_HostAddress = http://localhost:5278
 
 GET {{Supermercado.Api_HostAddress}}/categorias
 Accept: application/json
@@ -14,3 +14,5 @@ Content-Type: application/json
 }
 
 ###
+
+
