@@ -1,6 +1,6 @@
 # Esquema físico — Supermercado
 
-Modelo gerado pela única migration InitialCreate. As nove entidades e os GUIDs do CP1 foram mantidos; o CP2 explicita tipos, tamanhos, nullability, FKs, índices e comportamento de exclusão.
+Modelo final após as migrations InitialCreate e AjustaTiposConformeMer. As nove entidades e os GUIDs do CP1 foram mantidos; o CP2 explicita tipos, tamanhos, nullability, FKs, índices e comportamento de exclusão.
 
 ```mermaid
 erDiagram
@@ -14,8 +14,8 @@ erDiagram
     Vendas ||--o{ Pagamentos : recebe
     Categorias {
         char36 Id PK
-        varchar100 Nome UK
-        varchar500 Descricao "nullable"
+        varchar80 Nome UK
+        varchar255 Descricao "nullable"
         bool Ativo
     }
     Fornecedores {
@@ -23,7 +23,7 @@ erDiagram
         varchar14 Cnpj UK
         varchar150 RazaoSocial
         varchar150 NomeFantasia
-        varchar254 Email
+        varchar100 Email
         varchar20 Telefone "nullable"
         bool Ativo
     }
@@ -32,9 +32,9 @@ erDiagram
         char36 CategoriaId FK
         char36 FornecedorId FK
         varchar50 CodigoBarras UK
-        varchar150 Nome
-        decimal18_2 PrecoVenda
-        decimal18_2 PrecoCusto
+        varchar120 Nome
+        decimal10_2 PrecoVenda
+        decimal10_2 PrecoCusto
         int EstoqueAtual
         int EstoqueMinimo
     }
@@ -66,10 +66,10 @@ erDiagram
         char36 ClienteId FK "nullable"
         char36 FuncionarioId FK
         char36 CaixaId FK
-        varchar50 NumeroCupom UK
+        varchar30 NumeroCupom UK
         datetime6 DataHora
-        decimal18_2 ValorTotal
-        decimal18_2 DescontoTotal
+        decimal10_2 ValorTotal
+        decimal10_2 DescontoTotal
         varchar20 Status
     }
     ItensVenda {
@@ -77,15 +77,15 @@ erDiagram
         char36 VendaId FK
         char36 ProdutoId FK
         int Quantidade
-        decimal18_2 PrecoUnitario
-        decimal18_2 Subtotal
-        decimal18_2 Desconto
+        decimal10_2 PrecoUnitario
+        decimal10_2 Subtotal
+        decimal10_2 Desconto
     }
     Pagamentos {
         char36 Id PK
         char36 VendaId FK
         varchar30 FormaPagamento
-        decimal18_2 Valor
+        decimal10_2 Valor
         datetime6 DataHora
         varchar100 CodigoTransacao "nullable"
         varchar20 Status

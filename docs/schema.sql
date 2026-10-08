@@ -146,5 +146,34 @@ CREATE UNIQUE INDEX `IX_Vendas_NumeroCupom` ON `Vendas` (`NumeroCupom`);
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
 VALUES ('20261008020101_InitialCreate', '10.0.11');
 
+ALTER TABLE `Vendas` MODIFY `ValorTotal` decimal(10,2) NOT NULL;
+
+ALTER TABLE `Vendas` MODIFY `NumeroCupom` varchar(30) NOT NULL;
+
+ALTER TABLE `Vendas` MODIFY `DescontoTotal` decimal(10,2) NOT NULL;
+
+ALTER TABLE `Produtos` MODIFY `PrecoVenda` decimal(10,2) NOT NULL;
+
+ALTER TABLE `Produtos` MODIFY `PrecoCusto` decimal(10,2) NOT NULL;
+
+ALTER TABLE `Produtos` MODIFY `Nome` varchar(120) NOT NULL;
+
+ALTER TABLE `Pagamentos` MODIFY `Valor` decimal(10,2) NOT NULL;
+
+ALTER TABLE `ItensVenda` MODIFY `Subtotal` decimal(10,2) NOT NULL;
+
+ALTER TABLE `ItensVenda` MODIFY `PrecoUnitario` decimal(10,2) NOT NULL;
+
+ALTER TABLE `ItensVenda` MODIFY `Desconto` decimal(10,2) NOT NULL;
+
+ALTER TABLE `Fornecedores` MODIFY `Email` varchar(100) NOT NULL;
+
+ALTER TABLE `Categorias` MODIFY `Nome` varchar(80) NOT NULL;
+
+ALTER TABLE `Categorias` MODIFY `Descricao` varchar(255) NULL;
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20261008214302_AjustaTiposConformeMer', '10.0.11');
+
 COMMIT;
 

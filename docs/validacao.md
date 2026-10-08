@@ -1,35 +1,46 @@
 # Validação do CP2
 
-Executada em 07/10/2026 no ambiente local:
+Revisão final executada em 08/10/2026, na branch main.
+
+## Ambiente
 
 - SDK .NET 10.0.400.
-- EF Core e dotnet-ef 10.0.11; MySql.EntityFrameworkCore 10.0.9.
-- MySQL Community Server 26.7.0, imagem mysql:latest, container TDSPB, porta 3306.
-- Senha local armazenada em User Secrets; nenhum segredo versionado.
+- EF Core e dotnet-ef 10.0.11.
+- MySql.EntityFrameworkCore 10.0.9.
+- MySQL Community Server 26.7.0, container TDSPB na porta 3306.
+- Credencial local em User Secrets, sem senha versionada.
 
-## Resultados
+## Persistência e migrations
 
 | Verificação | Resultado |
 | --- | --- |
-| Build da solução | Sucesso, zero erros e avisos |
-| Migration InitialCreate em banco novo | Aplicada com sucesso |
-| Segunda execução de database update | Banco atualizado; nenhuma migration reaplicada |
-| Modelo comparado com a migration | Sem alterações pendentes |
-| Tabelas no MySQL | Nove entidades e __EFMigrationsHistory |
-| Verificação de integração | 12 verificações passaram |
-| GET /categorias | 200 |
-| POST /categorias | 201 |
-| GET /categorias/{id} existente | 200 |
-| POST com nome duplicado | 409 |
-| POST com nome vazio | 400 |
-| GET com ID inexistente | 404 |
-| GET /openapi/v1.json | 200 |
+| Build da solução | Zero erros e avisos |
+| Atualização do banco que já tinha InitialCreate | AjustaTiposConformeMer aplicada |
+| Aplicação em banco novo | As duas migrations aplicadas com sucesso |
+| Nova execução de database update | Sucesso, sem mudanças adicionais |
+| Comparação do modelo com o snapshot | Sem alterações pendentes |
+| Integração no banco existente e no banco novo | 16 verificações passaram em cada cenário |
+| Dados de teste | Transações revertidas, registros HTTP e banco temporário removidos |
 
-A verificação de integração persiste todas as nove entidades e testa CRUD do repositório, cliente opcional, múltiplos e-mails nulos, precisão monetária, múltiplos pagamentos, índice único, FK inválida, exclusão restrita de produto vendido, SET NULL na exclusão do cliente e cascata dos itens/pagamentos. A transação é revertida ao final.
+As verificações cobrem inclusão, busca, atualização e remoção pelo repositório; persistência das nove entidades; venda sem cliente; e-mails nulos; precisão monetária; múltiplos pagamentos; índice único; FK inválida; cliente informado inexistente; limites de 80/255 caracteres; exclusão restrita; SET NULL e cascata.
 
-## Observação de ambiente
+Os limites do mapeamento foram conferidos com o dicionário de dados do CP1. A segunda migration está justificada no README e mantém o total de migrations dentro do limite do enunciado.
 
-O Docker Desktop apresentou erro de socket órfão em sailor-ingest.sock. O engine voltou a funcionar após guardar como backup e recriar somente as pastas temporárias de sockets, com os processos encerrados. Esse é um [problema relatado no repositório do Docker Desktop](https://github.com/docker/desktop-feedback/issues/554). As pastas de dados de containers e volumes não foram alteradas nessa recuperação.
+## API
 
-A configuração do Rider deve usar o SDK .NET 10. A instalação antiga em Program Files contém .NET 5; neste computador o SDK 10 está no diretório .dotnet do usuário.
+| Cenário | HTTP |
+| --- | --- |
+| Listar categorias | 200 |
+| Cadastrar categoria | 201 |
+| Buscar categoria existente | 200 |
+| Nome duplicado | 409 |
+| Nome vazio | 400 |
+| Nome com 81 caracteres | 400 |
+| Descrição com 256 caracteres | 400 |
+| Nome com 80 e descrição com 255 caracteres | 201 |
+| ID inexistente | 404 |
+| Documento OpenAPI em desenvolvimento | 200 |
 
+## Organização
+
+DbContext, configurações e repositório concreto ficam na Infrastructure. O contrato fica na Application e o registro scoped fica no Program.cs da API. O Domain continua sem dependência de EF Core. Não há bin/obj versionados.
