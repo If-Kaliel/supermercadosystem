@@ -4,7 +4,7 @@
 ### 👥 Integrantes do Grupo
 * **Nome:** Kaliel Aquino - **RM:** 567587
 * **Nome:** Andre Matuda - **RM:** 566733
-* **Nome:** Guilherme Anitelli - **RM:** 566744
+* **Nome:** Paulo Diedrich - **RM:** 567618
 
 ---
 
