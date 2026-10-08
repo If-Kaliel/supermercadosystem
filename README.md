@@ -10,6 +10,8 @@ Checkpoint 2 de .NET — 2TDSPB. Continuação do projeto de supermercado feito 
 | Andre Matuda | 566733 |
 | Paulo Diedrich | 567618 |
 
+Os integrantes acima são do CP2. O PDF do MER foi preservado como registro do CP1 e contém a composição do grupo daquela etapa.
+
 ## Domínio
 
 Sistema de gestão de supermercado e frente de caixa: produtos, categorias, fornecedores, clientes, funcionários, caixas, vendas, itens de venda e pagamentos.
