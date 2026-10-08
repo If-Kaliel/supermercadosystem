@@ -1,12 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
+using Supermercado.Application.Repositories;
+using Supermercado.Domain.Entities;
+using Supermercado.Infrastructure.Persistence;
+using Supermercado.Infrastructure.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+var connectionString = builder.Configuration.GetConnectionString("MySql")
+    ?? throw new InvalidOperationException("Connection string 'MySql' não foi encontrada.");
+
+builder.Services.AddDbContext<SupermercadoContext>(options => options.UseMySQL(connectionString));
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -14,28 +23,39 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet("/categorias", async (IRepository<Categoria> repository, CancellationToken cancellationToken) =>
+    Results.Ok(await repository.ListAsync(cancellationToken)));
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/categorias/{id:guid}", async (Guid id, IRepository<Categoria> repository,
+    CancellationToken cancellationToken) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var categoria = await repository.GetByIdAsync(id, cancellationToken);
+    return categoria is null ? Results.NotFound() : Results.Ok(categoria);
+});
+
+app.MapPost("/categorias", async (CriarCategoria request, IRepository<Categoria> repository,
+    CancellationToken cancellationToken) =>
+{
+    var nome = request.Nome?.Trim();
+    if (string.IsNullOrWhiteSpace(nome) || nome.Length > 100 || request.Descricao?.Length > 500)
+    {
+        return Results.BadRequest(new { mensagem = "Informe um nome de até 100 caracteres e uma descrição de até 500." });
+    }
+
+    var categoria = new Categoria { Nome = nome, Descricao = request.Descricao };
+    await repository.AddAsync(categoria, cancellationToken);
+    try
+    {
+        await repository.SaveChangesAsync(cancellationToken);
+    }
+    catch (DbUpdateException exception) when (exception.InnerException is MySqlException { Number: 1062 })
+    {
+        return Results.Conflict(new { mensagem = "Já existe uma categoria com esse nome." });
+    }
+
+    return Results.Created($"/categorias/{categoria.Id}", categoria);
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+record CriarCategoria(string? Nome, string? Descricao);
