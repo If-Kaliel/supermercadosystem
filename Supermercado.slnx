@@ -5,4 +5,7 @@
     <Project Path="src/Supermercado.Domain/Supermercado.Domain.csproj" />
     <Project Path="src/Supermercado.Infrastructure/Supermercado.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Supermercado.PersistenceChecks/Supermercado.PersistenceChecks.csproj" />
+  </Folder>
 </Solution>
