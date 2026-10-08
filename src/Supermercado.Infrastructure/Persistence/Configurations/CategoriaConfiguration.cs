@@ -11,8 +11,8 @@ public class CategoriaConfiguration : IEntityTypeConfiguration<Categoria>
         builder.ToTable("Categorias");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnType("char(36)").ValueGeneratedNever();
-        builder.Property(x => x.Nome).HasMaxLength(100).IsRequired(true);
-        builder.Property(x => x.Descricao).HasMaxLength(500).IsRequired(false);
+        builder.Property(x => x.Nome).HasMaxLength(80).IsRequired();
+        builder.Property(x => x.Descricao).HasMaxLength(255).IsRequired(false);
         builder.HasIndex(x => x.Nome).IsUnique();
     }
 }

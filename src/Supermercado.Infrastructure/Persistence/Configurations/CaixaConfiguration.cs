@@ -11,8 +11,8 @@ public class CaixaConfiguration : IEntityTypeConfiguration<Caixa>
         builder.ToTable("Caixas");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnType("char(36)").ValueGeneratedNever();
-        builder.Property(x => x.Localizacao).HasMaxLength(100).IsRequired(true);
-        builder.Property(x => x.Status).HasMaxLength(20).IsRequired(true);
+        builder.Property(x => x.Localizacao).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
         builder.HasIndex(x => x.NumeroCaixa).IsUnique();
     }
 }

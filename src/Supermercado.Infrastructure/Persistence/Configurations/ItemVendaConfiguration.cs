@@ -11,16 +11,16 @@ public class ItemVendaConfiguration : IEntityTypeConfiguration<ItemVenda>
         builder.ToTable("ItensVenda");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnType("char(36)").ValueGeneratedNever();
-        builder.Property(x => x.PrecoUnitario).HasPrecision(18, 2);
-        builder.Property(x => x.Subtotal).HasPrecision(18, 2);
-        builder.Property(x => x.Desconto).HasPrecision(18, 2);
+        builder.Property(x => x.PrecoUnitario).HasPrecision(10, 2);
+        builder.Property(x => x.Subtotal).HasPrecision(10, 2);
+        builder.Property(x => x.Desconto).HasPrecision(10, 2);
 
         builder.Property(x => x.VendaId).HasColumnType("char(36)");
         builder.HasOne<Venda>().WithMany().HasForeignKey(x => x.VendaId)
-            .IsRequired(true).OnDelete(DeleteBehavior.Cascade);
+            .IsRequired().OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(x => x.ProdutoId).HasColumnType("char(36)");
         builder.HasOne<Produto>().WithMany().HasForeignKey(x => x.ProdutoId)
-            .IsRequired(true).OnDelete(DeleteBehavior.Restrict);
+            .IsRequired().OnDelete(DeleteBehavior.Restrict);
     }
 }

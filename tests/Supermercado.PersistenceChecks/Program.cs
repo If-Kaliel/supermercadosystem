@@ -14,7 +14,7 @@ if ((await context.Database.GetPendingMigrationsAsync()).Any())
 await using var transaction = await context.Database.BeginTransactionAsync();
 try
 {
-    var suffix = Guid.NewGuid().ToString("N");
+    var suffix = Guid.NewGuid().ToString("N")[..24];
     var documento = Random.Shared.NextInt64(10000000000000, 99999999999999).ToString();
     var repository = new Repository<Categoria>(context);
     var categoria = new Categoria { Nome = $"Teste-{suffix}" };
@@ -33,7 +33,7 @@ try
     var fornecedor = new Fornecedor { RazaoSocial = "Fornecedor de teste", NomeFantasia = "Teste",
         Cnpj = documento, Email = $"teste-{suffix}@example.invalid" };
     var funcionario = new Funcionario { Nome = "Operador de teste", Cpf = documento[..11],
-        Matricula = suffix[..30], Cargo = "Caixa", DataAdmissao = DateTime.UtcNow };
+        Matricula = suffix, Cargo = "Caixa", DataAdmissao = DateTime.UtcNow };
     var caixa = new Caixa { NumeroCaixa = Random.Shared.Next(100000, int.MaxValue), Localizacao = "Teste" };
     var cliente = new Cliente { Nome = "Cliente de teste", Cpf = documento[1..12] };
     var outroCliente = new Cliente { Nome = "Segundo cliente", Cpf = documento[2..13] };
@@ -68,6 +68,21 @@ try
             Nome = "FK inválida", CodigoBarras = $"FK-{suffix}" });
     }, 1452, "chave estrangeira obrigatória");
     await ExpectDatabaseError(() => context.Produtos.Remove(produto), 1451, "exclusão restrita de produto vendido");
+
+    await ExpectDatabaseError(() => {
+        context.Categorias.Add(new Categoria { Nome = new string('A', 81) });
+    }, 1406, "nome da categoria limitado a 80 caracteres");
+    await ExpectDatabaseError(() => {
+        context.Categorias.Add(new Categoria { Nome = $"Descricao-{suffix}", Descricao = new string('A', 256) });
+    }, 1406, "descrição da categoria limitada a 255 caracteres");
+    await ExpectDatabaseError(() => {
+        context.Vendas.Add(new Venda { ClienteId = Guid.NewGuid(), FuncionarioId = funcionario.Id,
+            CaixaId = caixa.Id, NumeroCupom = $"FK-{suffix}" });
+    }, 1452, "cliente opcional precisa existir quando informado");
+    await ExpectDatabaseError(() => {
+        produto.PrecoVenda = 100000000.00m;
+        context.Produtos.Update(produto);
+    }, 1264, "precisão monetária decimal(10,2)");
 
     context.Clientes.Remove(cliente);
     await context.SaveChangesAsync();
@@ -115,4 +130,3 @@ async Task ExpectDatabaseError(Action arrange, int errorNumber, string name)
     }
     throw new InvalidOperationException($"O banco deveria rejeitar: {name}");
 }
-

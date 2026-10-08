@@ -11,8 +11,8 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.ToTable("Clientes");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnType("char(36)").ValueGeneratedNever();
-        builder.Property(x => x.Nome).HasMaxLength(150).IsRequired(true);
-        builder.Property(x => x.Cpf).HasMaxLength(11).IsRequired(true);
+        builder.Property(x => x.Nome).HasMaxLength(150).IsRequired();
+        builder.Property(x => x.Cpf).HasMaxLength(11).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired(false);
         builder.Property(x => x.Telefone).HasMaxLength(20).IsRequired(false);
         builder.HasIndex(x => x.Cpf).IsUnique();

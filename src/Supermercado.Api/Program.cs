@@ -8,8 +8,11 @@ using Supermercado.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-var connectionString = builder.Configuration.GetConnectionString("MySql")
-    ?? throw new InvalidOperationException("Connection string 'MySql' não foi encontrada.");
+var connectionString = builder.Configuration.GetConnectionString("MySql");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Configure a connection string 'MySql' antes de executar a API.");
+}
 
 builder.Services.AddDbContext<SupermercadoContext>(options => options.UseMySQL(connectionString));
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -37,9 +40,9 @@ app.MapPost("/categorias", async (CriarCategoria request, IRepository<Categoria>
     CancellationToken cancellationToken) =>
 {
     var nome = request.Nome?.Trim();
-    if (string.IsNullOrWhiteSpace(nome) || nome.Length > 100 || request.Descricao?.Length > 500)
+    if (string.IsNullOrWhiteSpace(nome) || nome.Length > 80 || request.Descricao?.Length > 255)
     {
-        return Results.BadRequest(new { mensagem = "Informe um nome de até 100 caracteres e uma descrição de até 500." });
+        return Results.BadRequest(new { mensagem = "Informe um nome de até 80 caracteres e uma descrição de até 255." });
     }
 
     var categoria = new Categoria { Nome = nome, Descricao = request.Descricao };

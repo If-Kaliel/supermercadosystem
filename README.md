@@ -1,8 +1,8 @@
 # SupermercadoSystem — CP2
 
-Projeto de persistência do Checkpoint 2 de .NET, continuação do MER e das entidades do CP1.
+Checkpoint 2 de .NET — 2TDSPB. Continuação do projeto de supermercado feito no CP1.
 
-## Integrantes — 2TDSPB
+## Integrantes
 
 | Nome | RM |
 | --- | --- |
@@ -10,51 +10,61 @@ Projeto de persistência do Checkpoint 2 de .NET, continuação do MER e das ent
 | Andre Matuda | 566733 |
 | Paulo Diedrich | 567618 |
 
-## Domínio e escopo
+## Domínio
 
-Sistema de Gestão de Supermercado e Frente de Caixa (PDV): catálogo de produtos, fornecedores, clientes, funcionários, caixas, vendas, itens e pagamentos.
+Sistema de gestão de supermercado e frente de caixa: produtos, categorias, fornecedores, clientes, funcionários, caixas, vendas, itens de venda e pagamentos.
 
-**Adaptação do enunciado:** o material do CP2 usa Recommenda como domínio de referência. Esta solução continua o domínio Supermercado do CP1, conforme a definição do grupo. Não inclui filmes, séries ou herança TPH; também não existe relação 1:1 no MER original. Caso o professor exija especificamente Recommenda ou essas cardinalidades, essa diferença precisa ser alinhada antes da entrega.
+O professor autorizou a continuidade do domínio Supermercado. Por isso, usamos o MER do nosso CP1 no lugar do Recommenda apresentado no enunciado. Nosso modelo tem relações 1:N e N:N por ItemVenda, além de cliente opcional na venda. Não há relação 1:1 nem herança TPH no MER deste domínio.
 
-O CP2 adiciona Entity Framework Core, MySQL, mapeamento das nove entidades, uma migration inicial, repositório genérico e injeção de dependência. A API oferece endpoints de categorias para demonstrar a persistência; não é um PDV completo com regras fiscais ou fechamento de venda.
+## O que foi feito no CP2
 
-## Organização
+- Persistência das nove entidades com Entity Framework Core e MySQL.
+- DbContext e configurações Fluent API na Infrastructure.
+- Chaves primárias e estrangeiras, campos obrigatórios, tamanhos e índices.
+- Repositório genérico com interface na Application e implementação na Infrastructure.
+- Contexto e repositórios com ciclo de vida scoped, registrados no Program.cs da API.
+- Migrations versionadas e endpoints de categorias para demonstrar o acesso ao banco.
 
-- `Supermercado.Domain`: nove entidades do CP1, sem dependência de EF Core.
-- `Supermercado.Application`: contrato `IRepository<T>`.
-- `Supermercado.Infrastructure`: `SupermercadoContext`, configurações Fluent API, migration e `Repository<T>`.
-- `Supermercado.Api`: configuração, endpoints e registro de DI no `Program.cs`.
-- `docs/`: MER do CP1, diagrama físico e SQL gerado pela migration.
+## Organização da solução
 
-O contexto é registrado como scoped por `AddDbContext` e o repositório por `AddScoped`. Todos os repositórios de uma requisição compartilham o mesmo contexto. `AddAsync`, `Update` e `Remove` precisam de `SaveChangesAsync` para gravar. `ListAsync` consulta sem tracking; `GetByIdAsync` permite editar a entidade rastreada.
+| Projeto | Responsabilidade |
+| --- | --- |
+| Supermercado.Domain | Entidades do CP1, sem dependência do EF Core |
+| Supermercado.Application | Interface IRepository<T> |
+| Supermercado.Infrastructure | Contexto, mapeamentos, repositório e migrations |
+| Supermercado.Api | Endpoints, configuração e injeção de dependência |
+| Supermercado.PersistenceChecks | Verificação de integração com MySQL |
+
+O repositório usa a mesma estratégia para todas as entidades. Os métodos de inclusão, alteração e remoção precisam de `SaveChangesAsync` para gravar no banco. Não foram adicionadas regras de fechamento de caixa, estoque ou cálculo de venda na Infrastructure.
 
 ## Requisitos
 
-- SDK .NET 10. O `global.json` aceita as feature bands estáveis de .NET 10.
-- Docker Desktop com engine Linux ativo e porta 3306 disponível.
-- MySQL em Docker, imagem `mysql:latest`, seguindo o padrão da aula.
-- EF Core 10.0.11, ferramenta local `dotnet-ef` 10.0.11 e provider oficial `MySql.EntityFrameworkCore` 10.0.9.
+- SDK .NET 10.
+- Docker Desktop com engine Linux em execução.
+- Porta 3306 disponível para o MySQL.
 
-A compatibilidade do provider com .NET 10 está descrita no [NuGet oficial do MySQL](https://www.nuget.org/packages/MySql.EntityFrameworkCore/10.0.9).
+Pacotes usados: EF Core e dotnet-ef 10.0.11, MySql.EntityFrameworkCore 10.0.9 e Microsoft.AspNetCore.OpenApi 10.0.11.
 
-## Subir o banco e configurar a conexão
+## Banco de dados
 
-Execute os comandos abaixo no **PowerShell**, na raiz do repositório. Escolha uma senha exclusivamente de desenvolvimento. A senha fica no ambiente e em User Secrets, fora do Git.
+O SGBD usado é **MySQL em Docker**, com o container `TDSPB` e a imagem `mysql:latest`, seguindo o padrão da aula.
+
+Na raiz do projeto, execute no PowerShell:
 
 ```powershell
-$env:MYSQL_ROOT_PASSWORD = Read-Host "Senha do MySQL local"
+$env:MYSQL_ROOT_PASSWORD = Read-Host "Senha do MySQL de desenvolvimento"
 docker run --name TDSPB -e MYSQL_ROOT_PASSWORD -p 3306:3306 -d mysql:latest
 ```
 
-Se o container já existir, use `docker start TDSPB` e informe a senha com que ele foi criado. Não execute novamente `docker run` com o mesmo nome.
-
-Aguarde o MySQL ficar pronto. Para conferir:
+Se o container já existir:
 
 ```powershell
-docker logs TDSPB --tail 30
+docker start TDSPB
 ```
 
-Restaure os pacotes e a ferramenta local, e configure a connection string:
+Nesse caso, use a mesma senha definida na criação do container. Aguarde o MySQL iniciar; `docker logs TDSPB --tail 30` mostra quando ele está pronto para conexões.
+
+## Restaurar e configurar
 
 ```powershell
 dotnet restore
@@ -62,33 +72,29 @@ dotnet tool restore
 dotnet user-secrets set "ConnectionStrings:MySql" "Server=127.0.0.1;Port=3306;Database=Supermercado;User=root;Password=$env:MYSQL_ROOT_PASSWORD;" --project src/Supermercado.Api
 ```
 
-O `appsettings.Development.json` contém servidor, porta e nome do banco, sem senha. Em Development, o ASP.NET Core carrega os User Secrets automaticamente. Para outro ambiente, configure `ConnectionStrings__MySql` no ambiente do servidor. Não coloque credenciais reais em arquivos versionados.
+A connection string de desenvolvimento fica em `appsettings.Development.json`, com servidor, porta e nome do banco. A senha fica em User Secrets, fora do repositório. Em outro ambiente, a conexão completa pode ser definida pela variável `ConnectionStrings__MySql`. Nenhuma credencial de produção deve ser versionada.
 
-Se `dotnet --list-sdks` mostrar apenas um SDK antigo, confira o PATH. Neste computador, o SDK 10 também está em `$env:USERPROFILE\.dotnet\dotnet.exe`; a instalação de `Program Files` contém um SDK anterior. Se necessário, nesta sessão:
-
-```powershell
-$env:DOTNET_ROOT = "$env:USERPROFILE\.dotnet"
-$env:PATH = "$env:DOTNET_ROOT;$env:PATH"
-dotnet --list-sdks
-```
-
-## Aplicar a migration
+## Aplicar as migrations
 
 ```powershell
 dotnet ef database update --project src/Supermercado.Infrastructure --startup-project src/Supermercado.Api -- --environment Development
 dotnet build
 ```
 
-Há somente uma migration, `InitialCreate`, que cria o esquema completo. Não é necessário gerar outra migration para iniciar o projeto. `database update` pode ser executado novamente: o EF consulta `__EFMigrationsHistory` e aplica somente migrations pendentes.
+São **duas migrations**, dentro do limite do CP2:
 
-Para verificar o esquema:
+1. `InitialCreate`: cria as nove tabelas, chaves e índices.
+2. `AjustaTiposConformeMer`: corrige os limites de texto e a precisão monetária para corresponder ao dicionário de dados do CP1. A primeira migration já havia sido aplicada, por isso o ajuste foi feito em uma segunda migration, preservando o histórico.
+
+A segunda migration ajusta Categoria.Nome para 80, Categoria.Descricao para 255, Fornecedor.Email para 100, Produto.Nome para 120, Venda.NumeroCupom para 30 e os valores monetários para `decimal(10,2)`. Os demais tamanhos não especificados no CP1 foram definidos no mapeamento. Dados anteriores precisam respeitar esses limites para a atualização ser aplicada.
+
+Para conferir se o modelo está sincronizado com as migrations:
 
 ```powershell
-docker exec -e MYSQL_PWD=$env:MYSQL_ROOT_PASSWORD TDSPB mysql -uroot Supermercado -e "SHOW TABLES;"
 dotnet ef migrations has-pending-model-changes --project src/Supermercado.Infrastructure --startup-project src/Supermercado.Api -- --environment Development
 ```
 
-## Executar e demonstrar a API
+## Executar a API
 
 ```powershell
 dotnet run --project src/Supermercado.Api --launch-profile http
@@ -101,47 +107,50 @@ Invoke-RestMethod http://localhost:5278/categorias
 Invoke-RestMethod http://localhost:5278/categorias -Method Post -ContentType "application/json" -Body '{"nome":"Mercearia","descricao":"Alimentos e itens de despensa"}'
 ```
 
-- `GET /categorias`: lista registros do MySQL.
-- `GET /categorias/{id}`: retorna a categoria ou 404.
-- `POST /categorias`: retorna 201 e Location; dados inválidos retornam 400 e nome duplicado retorna 409.
-- `GET /openapi/v1.json`: documento OpenAPI em Development.
-- Os exemplos também estão em `src/Supermercado.Api/Supermercado.Api.http`, executáveis pelo Rider.
-
-O perfil HTTPS original continua disponível. O perfil HTTP é suficiente para demonstração local.
-
-## Modelo físico
-
-Todas as PKs são GUIDs gerados no Domain e persistidos como `char(36)`. Valores monetários usam `decimal(18,2)`; strings têm tamanho e obrigatoriedade definidos. CPF/CNPJ devem ser informados somente com dígitos; a validação cadastral não faz parte deste CP2. As datas de venda e pagamento são geradas em UTC pela aplicação; MySQL `datetime(6)` não armazena fuso.
-
-| Relacionamento | Opcionalidade / exclusão |
+| Endpoint | Resultado |
 | --- | --- |
-| Categoria → Produto | Categoria obrigatória; exclusão restrita quando há produtos |
-| Fornecedor → Produto | Fornecedor obrigatório; pode existir sem produtos; exclusão restrita |
-| Cliente → Venda | Cliente opcional; exclusão do cliente deixa a FK nula |
-| Funcionario → Venda | Obrigatório; exclusão restrita |
-| Caixa → Venda | Obrigatório; exclusão restrita |
-| Venda → ItemVenda | FK obrigatória; exclusão da venda em cascata |
-| Produto → ItemVenda | FK obrigatória; exclusão do produto restrita |
-| Venda → Pagamento | FK obrigatória; exclusão da venda em cascata |
+| GET /categorias | Lista as categorias |
+| GET /categorias/{id} | Busca uma categoria; retorna 404 se não existir |
+| POST /categorias | Cadastra uma categoria; retorna 201, 400 para dados inválidos ou 409 para nome duplicado |
+| GET /openapi/v1.json | Documento OpenAPI em desenvolvimento |
 
-Venda e Produto formam uma relação N:N por meio de ItemVenda, que tem ID próprio e guarda quantidade, preço, subtotal e desconto. O mesmo produto pode aparecer em mais de uma linha do cupom; por isso o par VendaId/ProdutoId não é único.
+O nome da categoria aceita até 80 caracteres e a descrição opcional até 255. Os exemplos também estão em `src/Supermercado.Api/Supermercado.Api.http`, que pode ser executado no Rider.
 
-Índices únicos: número do caixa, nome da categoria, CPF e e-mail do cliente, CNPJ do fornecedor, CPF e matrícula do funcionário, código de barras e número do cupom. E-mails nulos são permitidos; MySQL aceita múltiplos NULLs em um índice único. As FKs também têm índices.
+## Mapeamento
 
-Uma FK garante que cada item aponta para uma venda existente; ela não exige que uma venda já nasça com pelo menos um item. Fechamento de venda, estoque, totais e conferência dos pagamentos são regras da futura camada de aplicação, fora do foco deste CP2.
+Todas as entidades têm PK do tipo Guid, gerada pela aplicação e armazenada como `char(36)`. Os valores monetários usam `decimal(10,2)`, conforme o MER.
 
-O MER do CP1 foi preservado em [docs/mer.pdf](docs/mer.pdf). O esquema físico está em [docs/modelo-fisico.md](docs/modelo-fisico.md), e o SQL gerado pelo EF em [docs/schema.sql](docs/schema.sql).
+| Relacionamento | Regra no banco |
+| --- | --- |
+| Categoria → Produto | Categoria obrigatória; exclusão restrita |
+| Fornecedor → Produto | Fornecedor obrigatório; exclusão restrita |
+| Cliente → Venda | Cliente opcional; exclusão deixa ClienteId nulo |
+| Funcionario → Venda | Funcionário obrigatório; exclusão restrita |
+| Caixa → Venda | Caixa obrigatório; exclusão restrita |
+| Produto → ItemVenda | Produto obrigatório; exclusão restrita |
+| Venda → ItemVenda | Venda obrigatória; exclusão em cascata |
+| Venda → Pagamento | Venda obrigatória; exclusão em cascata |
 
+ItemVenda representa o N:N entre Produto e Venda e guarda quantidade, preço, subtotal e desconto. Os índices únicos incluem CPF, CNPJ, matrícula, código de barras, número do caixa, número do cupom, nome da categoria e e-mail do cliente. O e-mail do cliente pode ser nulo.
 
-## Verificar a persistência
+No CP1, uma categoria deve ter produtos, uma venda válida deve ter itens e uma venda concluída deve ter pagamento. As FKs garantem os vínculos dos filhos com os pais; esses mínimos de filhos dependem de validação na aplicação ao concluir a operação. O CP2 fica na persistência, sem implementar essas regras de negócio.
 
-Com o MySQL iniciado e a migration aplicada, execute:
+## Verificação da persistência
+
+Com o banco iniciado e migrado:
 
 ```powershell
 $env:ConnectionStrings__MySql = "Server=127.0.0.1;Port=3306;Database=Supermercado;User=root;Password=$env:MYSQL_ROOT_PASSWORD;"
 dotnet run --project tests/Supermercado.PersistenceChecks
 ```
 
-O programa verifica CRUD pelo repositório, persistência das nove entidades, valores monetários, múltiplos pagamentos, cliente opcional, e-mails nulos, unicidade, FKs, exclusão restrita, SET NULL e cascata. Os registros são criados dentro de uma transação revertida ao final. Use um banco local de desenvolvimento. Uma falha encerra o programa com erro.
+O programa verifica CRUD, FKs, unicidade, cliente opcional, valores monetários, limites de texto e exclusões. Os dados são criados em uma transação revertida ao final.
 
-A validação executada está registrada em [docs/validacao.md](docs/validacao.md).
+## Documentação
+
+- [MER do CP1](docs/mer.pdf)
+- [Modelo físico](docs/modelo-fisico.md)
+- [SQL das migrations](docs/schema.sql)
+- [Resultados da validação](docs/validacao.md)
+
+A entrega no portal é somente o link do repositório do GitHub.
