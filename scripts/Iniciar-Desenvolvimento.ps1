@@ -3,6 +3,7 @@ param(
     [string]$ContainerName = 'TDSPB',
     [int]$Port = 3306,
     [string]$Database = 'Supermercado',
+    [switch]$AoAbrirProjeto,
     [switch]$Verificar,
     [switch]$ExecutarApi
 )
@@ -33,6 +34,10 @@ try {
     Write-Host "SDK selecionado: $sdk"
     $runningApi = Get-CimInstance Win32_Process -Filter "Name = 'Supermercado.Api.exe'" | Where-Object {
         $_.ExecutablePath -and $_.ExecutablePath.StartsWith($repoRoot + '\', [StringComparison]::OrdinalIgnoreCase)
+    }
+    if ($runningApi -and $AoAbrirProjeto) {
+        Write-Host 'A API deste projeto já está em execução. Preparação automática dispensada.'
+        return
     }
     if ($runningApi) {
         throw 'Pare a execução de Supermercado.Api no Rider antes de preparar ou recompilar o ambiente.'

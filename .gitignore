@@ -1,4 +1,4 @@
-﻿# =========================
+# =========================
 # .NET / C#
 # =========================
 
@@ -15,7 +15,13 @@ obj/
 .vs/
 
 # Rider / JetBrains
-.idea/
+# Compartilha somente a tarefa de inicialização do Rider.
+.idea/*
+!.idea/.idea.Supermercado/
+.idea/.idea.Supermercado/*
+!.idea/.idea.Supermercado/.idea/
+.idea/.idea.Supermercado/.idea/*
+!.idea/.idea.Supermercado/.idea/startup.xml
 *.iml
 
 # Build results

@@ -70,3 +70,14 @@ Em 08/10/2026 foi adicionada a carga automática de desenvolvimento, sem alterar
 O build Release concluiu sem erros ou avisos. As 20 verificações de integração passaram, incluindo as quatro da carga: cobertura das nove entidades, repetição sem duplicação (também após editar o código de um produto), preservação de uma categoria anterior e totais coerentes entre itens, vendas e pagamentos. As alterações desses testes foram revertidas.
 
 Duas reinicializações reais da API retornaram HTTP 200 em /categorias, adicionaram zero registros e mantiveram os mesmos hashes dos 26 exemplos. A carga é restrita a Development. O esquema continua sem alterações pendentes nas migrations.
+
+## Scalar e preparação pelo Rider
+
+- Scalar.AspNetCore 2.17.14 integrado ao OpenAPI em Development.
+- Perfis http/https com launchBrowser e launchUrl=scalar. O log RiderBrowserStarter confirmou a abertura de http://localhost:5278/scalar ao executar o perfil http pelo Rider.
+- HTTP 200 para /scalar/, /scalar/scalar.js, /scalar/scalar.aspnetcore.js e /openapi/v1.json. Interface renderizada com os três endpoints de categorias.
+- Respostas e modelo Categoria declarados no OpenAPI para orientar os testes pelo Scalar.
+- Configurações compartilhadas Preparar ambiente e Verificar persistência reconhecidas pelo Rider. Preparar ambiente salva em Tools > Startup Tasks, com Shared marcado.
+- Script validado no Windows PowerShell 5.1 com -Verificar: compilação sem avisos/erros, banco atualizado, modelo sem alterações pendentes, 20 verificações aprovadas e consulta HTTP 200. Registros de teste revertidos.
+- -AoAbrirProjeto validado com a API parada (preparação completa) e com a API em execução (não recompila arquivos em uso). A tarefa de abertura prepara o ambiente; os testes continuam sob demanda pela configuração Verificar persistência.
+- Docker Desktop deve estar iniciado. Container e volume MySQL existentes preservados, sem novas migrations.

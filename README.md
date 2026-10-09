@@ -45,13 +45,13 @@ O repositório usa a mesma estratégia para todas as entidades. Os métodos de i
 - Docker Desktop com engine Linux em execução.
 - Porta 3306 disponível para o MySQL.
 
-Pacotes usados: EF Core e dotnet-ef 10.0.11, MySql.EntityFrameworkCore 10.0.9 e Microsoft.AspNetCore.OpenApi 10.0.11.
+Pacotes usados: EF Core e dotnet-ef 10.0.11, MySql.EntityFrameworkCore 10.0.9, Microsoft.AspNetCore.OpenApi 10.0.11 e Scalar.AspNetCore 2.17.14.
 
 ## Banco de dados e preparação
 
 O SGBD é **MySQL em Docker**. Neste ambiente, usamos o container `TDSPB`, porta `3306`, banco `Supermercado` e MySQL 26.7.0. O container e o volume existentes foram preservados.
 
-Com o Docker Desktop iniciado e a API parada no Rider, execute uma vez na raiz do projeto:
+No Rider, a preparação pode ser executada automaticamente ao abrir o projeto, conforme a seção abaixo. Pelo terminal, com o Docker Desktop iniciado e a API parada, execute na raiz do projeto:
 
 ```powershell
 .\scripts\Iniciar-Desenvolvimento.ps1
@@ -70,6 +70,14 @@ Para executar também as verificações de persistência e a consulta HTTP real:
 ```
 
 O projeto de verificações é um programa de integração, executado com `dotnet run`; não é uma suíte xUnit/MSTest. O script também executa `dotnet test`, mas as 20 verificações reais são feitas pelo programa de integração. Seus registros são revertidos em transação. A API temporária usada para verificar HTTP é encerrada ao final.
+
+## Preparação automática no Rider
+
+Ao abrir `Supermercado.slnx`, o Rider executa a configuração **Preparar ambiente**, que chama o mesmo script de preparação. Deixe o Docker Desktop iniciado e aguarde a tarefa terminar na janela Run antes de executar a API. Se a API deste projeto já estiver rodando, a tarefa de abertura não recompila os arquivos em uso.
+
+As configurações estão em `.run/`, e a tarefa compartilhada está em `.idea/.idea.Supermercado/.idea/startup.xml`. Ela pode ser conferida em **Settings > Tools > Startup Tasks**. O script só roda automaticamente na abertura do projeto pelo Rider; abrir um arquivo isolado ou usar outro editor não dispara essa tarefa.
+
+Para testar sem digitar comandos, selecione **Verificar persistência** na lista de configurações e clique em Run, com a API parada. Essa configuração prepara o banco, compila, executa as 20 verificações de integração e consulta a API temporária. A configuração usa o Windows PowerShell no caminho padrão `C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe`.
 
 ## Dados fictícios na inicialização
 
@@ -125,7 +133,7 @@ dotnet ef migrations has-pending-model-changes --project src/Supermercado.Infras
 
 ## Executar a API
 
-No Rider, abra `Supermercado.slnx`, selecione **Supermercado.Api: http** ou **https** e clique em Run. Os dois perfis definem `DOTNET_ENVIRONMENT` e `ASPNETCORE_ENVIRONMENT` como `Development`. A conexão local é carregada automaticamente; não informe senha nos argumentos da IDE.
+No Rider, abra `Supermercado.slnx`, selecione **Supermercado.Api: http** ou **https** e clique em Run. Os dois perfis definem `DOTNET_ENVIRONMENT` e `ASPNETCORE_ENVIRONMENT` como `Development`. A conexão local é carregada automaticamente; não informe senha nos argumentos da IDE. Ao iniciar a API, o navegador abre o Scalar em `/scalar`, onde é possível consultar e testar os endpoints. Aguarde a preparação automática do ambiente terminar antes de clicar em Run.
 
 Pelo terminal, o script também pode preparar o banco e manter a API em execução:
 
@@ -152,6 +160,7 @@ Invoke-RestMethod http://localhost:5278/categorias -Method Post -ContentType "ap
 | GET /categorias/{id} | Busca uma categoria; retorna 404 se não existir |
 | POST /categorias | Cadastra uma categoria; retorna 201, 400 para dados inválidos ou 409 para nome duplicado |
 | GET /openapi/v1.json | Documento OpenAPI em desenvolvimento |
+| GET /scalar | Interface Scalar para testar a API em desenvolvimento |
 
 O nome da categoria aceita até 80 caracteres e a descrição opcional até 255. Os exemplos também estão em `src/Supermercado.Api/Supermercado.Api.http`, que pode ser executado no Rider.
 
