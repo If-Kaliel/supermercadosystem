@@ -69,8 +69,29 @@ Para executar também as verificações de persistência e a consulta HTTP real:
 .\scripts\Iniciar-Desenvolvimento.ps1 -Verificar
 ```
 
-O projeto de verificações é um programa de integração, executado com `dotnet run`; não é uma suíte xUnit/MSTest. O script também executa `dotnet test`, mas as 16 verificações reais são feitas pelo programa de integração. Seus registros são revertidos em transação. A API temporária usada para verificar HTTP é encerrada ao final.
+O projeto de verificações é um programa de integração, executado com `dotnet run`; não é uma suíte xUnit/MSTest. O script também executa `dotnet test`, mas as 20 verificações reais são feitas pelo programa de integração. Seus registros são revertidos em transação. A API temporária usada para verificar HTTP é encerrada ao final.
 
+## Dados fictícios na inicialização
+
+Ao iniciar a API em Development pelos perfis http/https ou pelo script com -ExecutarApi, o projeto adiciona os exemplos que ainda não existem:
+
+| Entidade | Exemplos |
+| --- | --- |
+| Categorias | 3: Mercearia, Bebidas e Limpeza |
+| Fornecedores | 2 distribuidoras fictícias |
+| Produtos | 6: arroz, feijão, leite, suco, detergente e sabão |
+| Clientes | 2 clientes fictícios |
+| Funcionários | 2 operadores fictícios |
+| Caixas | 2: números 9001 e 9002 |
+| Vendas | 2: cupons DEMO-0001 e DEMO-0002 |
+| Itens de venda | 4, vinculados às vendas e produtos |
+| Pagamentos | 3: PIX, dinheiro e cartão |
+
+Em banco vazio são 26 registros. A segunda venda é sem cliente e tem dois pagamentos. Os valores dos itens e pagamentos correspondem aos totais das vendas. Nomes, documentos e e-mails são fictícios, próprios para demonstração.
+
+A carga usa IDs fixos e consulta as chaves únicas antes de incluir. Reiniciar não duplica nem sobrescreve os registros existentes, inclusive exemplos editados depois. A inclusão é feita em uma transação e não cria migrations. Em Production a carga não é executada. As migrations precisam estar aplicadas, como faz o script de preparação.
+
+Os quatro testes da carga inicial verificam as nove entidades, repetição sem duplicação, preservação de cadastro anterior/chave editada e os totais das vendas. Eles são revertidos junto com os demais testes de integração. Os exemplos criados pelo startup da API permanecem no banco.
 ## Configuração da conexão
 
 `appsettings.json` e `appsettings.Development.json` contêm configurações compartilhadas, sem credenciais. A conexão de desenvolvimento fica no arquivo local. Há um exemplo sem credenciais reais em `appsettings.Local.example.json`.
@@ -122,7 +143,7 @@ Em outro PowerShell:
 
 ```powershell
 Invoke-RestMethod http://localhost:5278/categorias
-Invoke-RestMethod http://localhost:5278/categorias -Method Post -ContentType "application/json" -Body '{"nome":"Mercearia","descricao":"Alimentos e itens de despensa"}'
+Invoke-RestMethod http://localhost:5278/categorias -Method Post -ContentType "application/json" -Body '{"nome":"Hortifruti","descricao":"Frutas, verduras e legumes"}'
 ```
 
 | Endpoint | Resultado |

@@ -9,8 +9,8 @@ POST {{Supermercado.Api_HostAddress}}/categorias
 Content-Type: application/json
 
 {
-  "nome": "Mercearia",
-  "descricao": "Alimentos e itens de despensa"
+  "nome": "Hortifruti",
+  "descricao": "Frutas, verduras e legumes"
 }
 
 ###

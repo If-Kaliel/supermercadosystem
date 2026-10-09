@@ -62,3 +62,11 @@ A revisão foi repetida em uma cópia limpa da main baixada do GitHub, no commit
 Além dos cenários anteriores, foram conferidos corpo JSON nulo, JSON incompleto, tipo incorreto para o nome e nome ausente (400), tipo de mídia incompatível (415), cadastro nos limites de 80/255 caracteres (201), leitura do conteúdo persistido (200) e tentativa de cadastro duplicado (409).
 
 Não foram encontrados problemas técnicos impeditivos no escopo de persistência. Foi esclarecida no README a diferença entre os integrantes atuais do CP2 e o grupo registrado no PDF histórico do CP1. O domínio Supermercado segue a autorização do professor informada pelo grupo; o MER usado não contém relação 1:1 nem herança TPH. Regras de estoque, fechamento de venda e mínimos de filhos continuam fora desta etapa, conforme explicado no README.
+
+## Carga inicial de exemplos
+
+Em 08/10/2026 foi adicionada a carga automática de desenvolvimento, sem alterar as duas migrations. O banco passou a conter 26 exemplos: 3 categorias, 2 fornecedores, 6 produtos, 2 clientes, 2 funcionários, 2 caixas, 2 vendas, 4 itens e 3 pagamentos.
+
+O build Release concluiu sem erros ou avisos. As 20 verificações de integração passaram, incluindo as quatro da carga: cobertura das nove entidades, repetição sem duplicação (também após editar o código de um produto), preservação de uma categoria anterior e totais coerentes entre itens, vendas e pagamentos. As alterações desses testes foram revertidas.
+
+Duas reinicializações reais da API retornaram HTTP 200 em /categorias, adicionaram zero registros e mantiveram os mesmos hashes dos 26 exemplos. A carga é restrita a Development. O esquema continua sem alterações pendentes nas migrations.
