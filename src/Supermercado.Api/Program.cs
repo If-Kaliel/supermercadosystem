@@ -4,6 +4,7 @@ using Supermercado.Application.Repositories;
 using Supermercado.Domain.Entities;
 using Supermercado.Infrastructure.Persistence;
 using Supermercado.Infrastructure.Repositories;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,7 @@ builder.Services.AddDbContext<SupermercadoContext>(options => options.UseMySQL(c
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 var app = builder.Build();
+
 var connectionSource = connectionSetting!.Provider is FileConfigurationProvider fileProvider
     ? fileProvider.Source.Path
     : connectionSetting.Provider.GetType().Name;
@@ -45,19 +47,23 @@ app.Logger.LogInformation("MySQL: origem {Source}; destino {Server}:{Port}/{Data
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
 
 app.MapGet("/categorias", async (IRepository<Categoria> repository, CancellationToken cancellationToken) =>
-    Results.Ok(await repository.ListAsync(cancellationToken)));
+    Results.Ok(await repository.ListAsync(cancellationToken)))
+    .Produces<List<Categoria>>();
 
 app.MapGet("/categorias/{id:guid}", async (Guid id, IRepository<Categoria> repository,
     CancellationToken cancellationToken) =>
 {
     var categoria = await repository.GetByIdAsync(id, cancellationToken);
     return categoria is null ? Results.NotFound() : Results.Ok(categoria);
-});
+})
+    .Produces<Categoria>()
+    .Produces(StatusCodes.Status404NotFound);
 
 app.MapPost("/categorias", async (CriarCategoria request, IRepository<Categoria> repository,
     CancellationToken cancellationToken) =>
@@ -80,7 +86,10 @@ app.MapPost("/categorias", async (CriarCategoria request, IRepository<Categoria>
     }
 
     return Results.Created($"/categorias/{categoria.Id}", categoria);
-});
+})
+    .Produces<Categoria>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status400BadRequest)
+    .Produces(StatusCodes.Status409Conflict);
 
 if (app.Environment.IsDevelopment())
 {
