@@ -8,16 +8,39 @@ using Supermercado.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-var connectionString = builder.Configuration.GetConnectionString("MySql");
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+    builder.Configuration.AddEnvironmentVariables();
+    builder.Configuration.AddCommandLine(args);
+}
+
+// Uma variável vazia não deve apagar uma conexão válida dos arquivos locais.
+var connectionSetting = ((IConfigurationRoot)builder.Configuration).Providers.Reverse()
+    .Select(provider => new
+    {
+        Provider = provider,
+        Value = provider.TryGet("ConnectionStrings:MySql", out var value) ? value : null
+    })
+    .FirstOrDefault(setting => !string.IsNullOrWhiteSpace(setting.Value));
+var connectionString = connectionSetting?.Value;
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("Configure a connection string 'MySql' antes de executar a API.");
+    throw new InvalidOperationException(
+        "Configure ConnectionStrings:MySql. Em desenvolvimento, execute scripts/Iniciar-Desenvolvimento.ps1 " +
+        "e use o perfil http ou https (Development).");
 }
+var mysqlSettings = new MySqlConnectionStringBuilder(connectionString);
 
 builder.Services.AddDbContext<SupermercadoContext>(options => options.UseMySQL(connectionString));
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 var app = builder.Build();
+var connectionSource = connectionSetting!.Provider is FileConfigurationProvider fileProvider
+    ? fileProvider.Source.Path
+    : connectionSetting.Provider.GetType().Name;
+app.Logger.LogInformation("MySQL: origem {Source}; destino {Server}:{Port}/{Database}; ambiente {Environment}",
+    connectionSource, mysqlSettings.Server, mysqlSettings.Port, mysqlSettings.Database, app.Environment.EnvironmentName);
 
 if (app.Environment.IsDevelopment())
 {
