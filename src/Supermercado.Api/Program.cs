@@ -82,6 +82,14 @@ app.MapPost("/categorias", async (CriarCategoria request, IRepository<Categoria>
     return Results.Created($"/categorias/{categoria.Id}", categoria);
 });
 
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var context = scope.ServiceProvider.GetRequiredService<SupermercadoContext>();
+    var adicionados = await DadosIniciais.PopularAsync(context);
+    app.Logger.LogInformation("Carga de exemplos: {Count} registros adicionados.", adicionados);
+}
+
 app.Run();
 
 record CriarCategoria(string? Nome, string? Descricao);

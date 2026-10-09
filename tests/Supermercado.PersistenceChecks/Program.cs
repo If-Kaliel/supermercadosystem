@@ -14,6 +14,46 @@ if ((await context.Database.GetPendingMigrationsAsync()).Any())
 await using var transaction = await context.Database.BeginTransactionAsync();
 try
 {
+    var categoriaAnterior = await context.Categorias.FirstOrDefaultAsync(x => x.Nome == "Mercearia");
+    if (categoriaAnterior is null)
+    {
+        categoriaAnterior = new Categoria { Nome = "Mercearia", Descricao = "Cadastro anterior à carga", Ativo = false };
+        context.Categorias.Add(categoriaAnterior);
+        await context.SaveChangesAsync();
+    }
+    var descricaoAnterior = categoriaAnterior.Descricao;
+    var ativoAnterior = categoriaAnterior.Ativo;
+    await DadosIniciais.PopularAsync(context);
+    // Simula a edição de uma chave do exemplo; reiniciar não deve recriar nem sobrescrever o registro.
+    var produtoEditado = await context.Produtos.FindAsync(Guid.Parse("30000000-0000-0000-0000-000000000001"));
+    if (produtoEditado is not null)
+    {
+        produtoEditado.CodigoBarras = "TESTE-CODIGO-EDITADO";
+        await context.SaveChangesAsync();
+    }
+    var primeiraCarga = await ContarRegistrosAsync();
+    Check(primeiraCarga.All(total => total > 0), "carga de exemplos nas nove entidades");
+    context.ChangeTracker.Clear();
+    var segundaCarga = await DadosIniciais.PopularAsync(context);
+    var contagemSegundaCarga = await ContarRegistrosAsync();
+    var chavePreservada = produtoEditado is null || await context.Produtos.AnyAsync(x =>
+        x.Id == produtoEditado.Id && x.CodigoBarras == "TESTE-CODIGO-EDITADO");
+    Check(segundaCarga == 0 && chavePreservada && primeiraCarga.SequenceEqual(contagemSegundaCarga),
+        "carga inicial sem duplicação");
+    var categoriaPreservada = await context.Categorias.SingleAsync(x => x.Nome == "Mercearia");
+    Check(categoriaPreservada.Id == categoriaAnterior.Id && categoriaPreservada.Descricao == descricaoAnterior
+        && categoriaPreservada.Ativo == ativoAnterior, "carga preserva cadastro anterior");
+    var vendasExemplo = await context.Vendas.Where(x => x.NumeroCupom == "DEMO-0001" || x.NumeroCupom == "DEMO-0002").ToListAsync();
+    var totaisCoerentes = true;
+    foreach (var exemplo in vendasExemplo)
+    {
+        var subtotal = await context.ItensVenda.Where(x => x.VendaId == exemplo.Id).SumAsync(x => x.Subtotal - x.Desconto);
+        var pago = await context.Pagamentos.Where(x => x.VendaId == exemplo.Id).SumAsync(x => x.Valor);
+        totaisCoerentes &= exemplo.ValorTotal == subtotal - exemplo.DescontoTotal && exemplo.ValorTotal == pago;
+    }
+    Check(vendasExemplo.Count == 2 && totaisCoerentes, "totais dos itens, vendas e pagamentos de exemplo");
+    context.ChangeTracker.Clear();
+
     var suffix = Guid.NewGuid().ToString("N")[..24];
     var documento = Random.Shared.NextInt64(10000000000000, 99999999999999).ToString();
     var repository = new Repository<Categoria>(context);
@@ -130,3 +170,11 @@ async Task ExpectDatabaseError(Action arrange, int errorNumber, string name)
     }
     throw new InvalidOperationException($"O banco deveria rejeitar: {name}");
 }
+
+async Task<int[]> ContarRegistrosAsync() =>
+[
+    await context.Categorias.CountAsync(), await context.Fornecedores.CountAsync(),
+    await context.Produtos.CountAsync(), await context.Clientes.CountAsync(),
+    await context.Funcionarios.CountAsync(), await context.Caixas.CountAsync(),
+    await context.Vendas.CountAsync(), await context.ItensVenda.CountAsync(), await context.Pagamentos.CountAsync()
+];
