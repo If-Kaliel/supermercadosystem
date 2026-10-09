@@ -41,46 +41,52 @@ O repositório usa a mesma estratégia para todas as entidades. Os métodos de i
 
 ## Requisitos
 
-- SDK .NET 10.
+- SDK .NET 10 e PowerShell 5.1 ou 7.
 - Docker Desktop com engine Linux em execução.
 - Porta 3306 disponível para o MySQL.
 
 Pacotes usados: EF Core e dotnet-ef 10.0.11, MySql.EntityFrameworkCore 10.0.9 e Microsoft.AspNetCore.OpenApi 10.0.11.
 
-## Banco de dados
+## Banco de dados e preparação
 
-O SGBD usado é **MySQL em Docker**, com o container `TDSPB` e a imagem `mysql:latest`, seguindo o padrão da aula.
+O SGBD é **MySQL em Docker**. Neste ambiente, usamos o container `TDSPB`, porta `3306`, banco `Supermercado` e MySQL 26.7.0. O container e o volume existentes foram preservados.
 
-Na raiz do projeto, execute no PowerShell:
-
-```powershell
-$env:MYSQL_ROOT_PASSWORD = Read-Host "Senha do MySQL de desenvolvimento"
-docker run --name TDSPB -e MYSQL_ROOT_PASSWORD -p 3306:3306 -d mysql:latest
-```
-
-Se o container já existir:
+Com o Docker Desktop iniciado e a API parada no Rider, execute uma vez na raiz do projeto:
 
 ```powershell
-docker start TDSPB
+.\scripts\Iniciar-Desenvolvimento.ps1
 ```
 
-Nesse caso, use a mesma senha definida na criação do container. Aguarde o MySQL iniciar; `docker logs TDSPB --tail 30` mostra quando ele está pronto para conexões.
+O script seleciona o SDK .NET 10, inicia ou reaproveita o MySQL, restaura pacotes e ferramentas, compila e aplica as migrations. Ele verifica se a API está em execução antes de recompilar, para evitar arquivos bloqueados no Windows. A conexão é salva em `src/Supermercado.Api/appsettings.Local.json`, ignorado pelo Git. Não é necessário copiar ou digitar a senha em cada execução.
 
-## Restaurar e configurar
+Na primeira execução, uma conexão válida que já esteja em User Secrets é transferida para o arquivo local. A chave antiga só é removida após validar o acesso com EF Core, mantendo os demais segredos. Se não houver configuração local, o script usa a credencial do container existente; se o volume foi inicializado com outra senha, a validação falha e os dados são preservados.
+
+Em uma máquina sem `TDSPB`, o script cria o container com senha aleatória, volume nomeado `TDSPB-dados`, porta publicada somente em localhost e a imagem MySQL fixada por digest. O digest corresponde à versão validada neste projeto. Containers e volumes existentes nunca são removidos. A política `unless-stopped` mantém o serviço disponível após reiniciar o Docker, salvo quando ele foi parado manualmente.
+
+Para executar também as verificações de persistência e a consulta HTTP real:
 
 ```powershell
-dotnet restore
-dotnet tool restore
-dotnet user-secrets set "ConnectionStrings:MySql" "Server=127.0.0.1;Port=3306;Database=Supermercado;User=root;Password=$env:MYSQL_ROOT_PASSWORD;" --project src/Supermercado.Api
+.\scripts\Iniciar-Desenvolvimento.ps1 -Verificar
 ```
 
-A connection string de desenvolvimento fica em `appsettings.Development.json`, com servidor, porta e nome do banco. A senha fica em User Secrets, fora do repositório. Em outro ambiente, a conexão completa pode ser definida pela variável `ConnectionStrings__MySql`. Nenhuma credencial de produção deve ser versionada.
+O projeto de verificações é um programa de integração, executado com `dotnet run`; não é uma suíte xUnit/MSTest. O script também executa `dotnet test`, mas as 16 verificações reais são feitas pelo programa de integração. Seus registros são revertidos em transação. A API temporária usada para verificar HTTP é encerrada ao final.
 
-## Aplicar as migrations
+## Configuração da conexão
+
+`appsettings.json` e `appsettings.Development.json` contêm configurações compartilhadas, sem credenciais. A conexão de desenvolvimento fica no arquivo local. Há um exemplo sem credenciais reais em `appsettings.Local.example.json`.
+
+Em Development, a precedência da conexão, da maior para a menor, é: argumentos de linha de comando, variáveis de ambiente, arquivo local, User Secrets e arquivos appsettings padrão. Valores vazios são desconsiderados. O log inicial informa a origem efetiva, servidor, porta e banco, sem imprimir a senha.
+
+Em outros ambientes, configure `ConnectionStrings__MySql` externamente. O arquivo local só é carregado em Development e não é incluído na publicação. Uma conexão ausente gera uma mensagem de configuração na inicialização.
+
+O script detecta uma variável `ConnectionStrings__MySql` conflitante e interrompe antes de aplicar migrations. Também confere servidor, porta e banco para evitar atualizar um destino diferente por engano.
+
+## Aplicar as migrations manualmente
+
+O script já executa essa etapa. Para repetir separadamente após preparar o ambiente:
 
 ```powershell
 dotnet ef database update --project src/Supermercado.Infrastructure --startup-project src/Supermercado.Api -- --environment Development
-dotnet build
 ```
 
 São **duas migrations**, dentro do limite do CP2:
@@ -97,6 +103,16 @@ dotnet ef migrations has-pending-model-changes --project src/Supermercado.Infras
 ```
 
 ## Executar a API
+
+No Rider, abra `Supermercado.slnx`, selecione **Supermercado.Api: http** ou **https** e clique em Run. Os dois perfis definem `DOTNET_ENVIRONMENT` e `ASPNETCORE_ENVIRONMENT` como `Development`. A conexão local é carregada automaticamente; não informe senha nos argumentos da IDE.
+
+Pelo terminal, o script também pode preparar o banco e manter a API em execução:
+
+```powershell
+.\scripts\Iniciar-Desenvolvimento.ps1 -ExecutarApi
+```
+
+Ou, com o ambiente já preparado:
 
 ```powershell
 dotnet run --project src/Supermercado.Api --launch-profile http
@@ -142,8 +158,7 @@ No CP1, uma categoria deve ter produtos, uma venda válida deve ter itens e uma 
 Com o banco iniciado e migrado:
 
 ```powershell
-$env:ConnectionStrings__MySql = "Server=127.0.0.1;Port=3306;Database=Supermercado;User=root;Password=$env:MYSQL_ROOT_PASSWORD;"
-dotnet run --project tests/Supermercado.PersistenceChecks
+.\scripts\Iniciar-Desenvolvimento.ps1 -Verificar
 ```
 
 O programa verifica CRUD, FKs, unicidade, cliente opcional, valores monetários, limites de texto e exclusões. Os dados são criados em uma transação revertida ao final.
@@ -154,5 +169,6 @@ O programa verifica CRUD, FKs, unicidade, cliente opcional, valores monetários,
 - [Modelo físico](docs/modelo-fisico.md)
 - [SQL das migrations](docs/schema.sql)
 - [Resultados da validação](docs/validacao.md)
+- [Diagnóstico e correção da infraestrutura](docs/infraestrutura.md)
 
 A entrega no portal é somente o link do repositório do GitHub.

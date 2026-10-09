@@ -1,6 +1,6 @@
 # Validação do CP2
 
-Revisão final executada em 08/10/2026, na branch main.
+Revisão executada em 08/10/2026, na branch main. A correção posterior da configuração local está registrada em [Infraestrutura](infraestrutura.md).
 
 ## Ambiente
 
@@ -8,7 +8,7 @@ Revisão final executada em 08/10/2026, na branch main.
 - EF Core e dotnet-ef 10.0.11.
 - MySql.EntityFrameworkCore 10.0.9.
 - MySQL Community Server 26.7.0, container TDSPB na porta 3306.
-- Credencial local em User Secrets, sem senha versionada.
+- Credencial inicialmente em User Secrets, depois consolidada no arquivo local ignorado pelo Git; sem senha versionada.
 
 ## Persistência e migrations
 
